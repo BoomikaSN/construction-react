@@ -22,6 +22,9 @@ public class Contractor {
     @Column(nullable = false)
     private String city; // e.g. Chennai, Coimbatore, Madurai
 
+    @Column(name = "contact_number")
+    private String contactNumber;
+
     @Column(name = "years_experience", nullable = false)
     private Integer yearsExperience;
 
@@ -84,6 +87,14 @@ public class Contractor {
 
     public void setCity(String city) {
         this.city = city;
+    }
+
+    public String getContactNumber() {
+        return contactNumber;
+    }
+
+    public void setContactNumber(String contactNumber) {
+        this.contactNumber = contactNumber;
     }
 
     public Integer getYearsExperience() {

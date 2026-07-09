@@ -32,17 +32,17 @@ const ContractorDetail = () => {
     const [showQuoteForm, setShowQuoteForm] = useState(false);
     const [showReviewForm, setShowReviewForm] = useState(false);
 
+    const user = (() => {
+        try { return JSON.parse(localStorage.getItem('user')); } catch { return null; }
+    })();
+
     // Quote form state
-    const [quoteData, setQuoteData] = useState({ projectType: 'Residential', message: '' });
+    const [quoteData, setQuoteData] = useState({ name: '', email: user?.email || '', projectType: 'Residential', message: '' });
     const [quoteStatus, setQuoteStatus] = useState('idle');
 
     // Review form state
     const [reviewData, setReviewData] = useState({ rating: 5, text: '' });
     const [reviewStatus, setReviewStatus] = useState('idle');
-
-    const user = (() => {
-        try { return JSON.parse(localStorage.getItem('user')); } catch { return null; }
-    })();
 
     useEffect(() => {
         const fetchData = async () => {
@@ -90,7 +90,7 @@ const ContractorDetail = () => {
         try {
             await submitQuote({ contractorId: id, ...quoteData });
             setQuoteStatus('success');
-            setQuoteData({ projectType: 'Residential', message: '' });
+            setQuoteData({ name: '', email: '', projectType: 'Residential', message: '' });
         } catch (err) {
             console.error('Failed to submit quote:', err);
             setQuoteStatus('error');
@@ -372,6 +372,28 @@ const ContractorDetail = () => {
                             </div>
                         ) : (
                             <form onSubmit={handleQuoteSubmit} className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Your Name</label>
+                                    <input
+                                        type="text"
+                                        value={quoteData.name}
+                                        onChange={(e) => setQuoteData({ ...quoteData, name: e.target.value })}
+                                        required
+                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent outline-none bg-white"
+                                        placeholder="John Doe"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                                    <input
+                                        type="email"
+                                        value={quoteData.email}
+                                        onChange={(e) => setQuoteData({ ...quoteData, email: e.target.value })}
+                                        required
+                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent outline-none bg-white"
+                                        placeholder="john@example.com"
+                                    />
+                                </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Project Type</label>
                                     <select

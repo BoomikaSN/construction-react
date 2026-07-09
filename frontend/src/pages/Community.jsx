@@ -1,28 +1,49 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MessageSquare, Users, ThumbsUp, Share2, Bell, Send } from 'lucide-react';
 
 const Community = () => {
-    const [posts, setPosts] = useState([
-        { id: 1, author: "John D.", text: "Just completed our dream home with Engineers Veedu! Highly recommended.", likes: 12, comments: 2, date: "2 days ago" },
-        { id: 2, author: "Sarah M.", text: "Anyone have recommendations for kitchen tile suppliers?", likes: 5, comments: 8, date: "5 days ago" },
-        { id: 3, author: "Engineers Veedu Team", text: "New blog post: 'Top 5 Sustainable Building Materials for 2026'. Check it out on our website!", likes: 45, comments: 0, date: "1 week ago", isOfficial: true }
-    ]);
-
+    const [posts, setPosts] = useState([]);
     const [newPost, setNewPost] = useState("");
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
 
-    const handlePostSubmit = (e) => {
+    useEffect(() => {
+        fetchPosts();
+    }, []);
+
+    const fetchPosts = async () => {
+        try {
+            const res = await fetch(`${apiUrl}/community`);
+            if (res.ok) {
+                const data = await res.json();
+                setPosts(data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch posts:", error);
+        }
+    };
+
+    const handlePostSubmit = async (e) => {
         e.preventDefault();
         if (!newPost.trim()) return;
-        const newPostObj = {
-            id: posts.length + 1,
-            author: "You",
-            text: newPost,
-            likes: 0,
-            comments: 0,
-            date: "Just now"
-        };
-        setPosts([newPostObj, ...posts]);
-        setNewPost("");
+
+        try {
+            const res = await fetch(`${apiUrl}/community`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    author: "You", 
+                    text: newPost,
+                    isOfficial: false
+                })
+            });
+            if (res.ok) {
+                const created = await res.json();
+                setPosts([created, ...posts]);
+                setNewPost("");
+            }
+        } catch (error) {
+            console.error("Failed to submit post:", error);
+        }
     };
 
     return (

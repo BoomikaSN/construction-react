@@ -19,10 +19,19 @@ export const logout = () => {
   window.dispatchEvent(new Event('user-state-change'));
 };
 
+export const getProfile = async () => {
+  return apiClient.get('/profile');
+};
+
+export const updateProfile = async (profileData) => {
+  return apiClient.put('/profile', profileData);
+};
+
 export const authApi = {
   login,
   register,
   getCurrentUser,
-  logout
+  logout,
+  getProfile,
+  updateProfile
 };
-

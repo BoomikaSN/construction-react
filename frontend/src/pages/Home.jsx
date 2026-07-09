@@ -15,6 +15,7 @@ const Home = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [reviews, setReviews] = useState(FALLBACK_REVIEWS);
     const [loadingReviews, setLoadingReviews] = useState(true);
+    const [projects, setProjects] = useState([]);
 
     // Quote form state
     const [quoteForm, setQuoteForm] = useState({ name: '', email: '', details: '' });
@@ -28,10 +29,20 @@ const Home = () => {
                     setReviews(reviewsData);
                 }
             } catch (err) {
-                console.error('Failed to fetch homepage data:', err);
-                // Keep fallback data
+                console.error('Failed to fetch homepage reviews:', err);
             } finally {
                 setLoadingReviews(false);
+            }
+            
+            try {
+                const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+                const res = await fetch(`${apiUrl}/projects`);
+                if (res.ok) {
+                    const data = await res.json();
+                    setProjects(data);
+                }
+            } catch (err) {
+                console.error('Failed to fetch homepage projects:', err);
             }
         };
         fetchData();
@@ -125,32 +136,17 @@ const Home = () => {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-                        {/* Project 1 */}
-                        <div className="rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-transform hover:-translate-y-2 bg-white">
-                            <img src="/projects/commercial.jpeg" alt="Commercial Office Buildout" className="w-full h-64 object-cover" />
-                            <div className="p-6">
-                                <h3 className="text-xl font-bold text-primary mb-2">Commercial Buildout</h3>
-                                <p className="text-gray-600">Modern office space delivered on time and within budget.</p>
+                        {projects.length > 0 ? projects.slice(0, 3).map((project, idx) => (
+                            <div key={idx} className="rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-transform hover:-translate-y-2 bg-white">
+                                <img src={project.image || "/projects/commercial.jpeg"} alt={project.name} className="w-full h-64 object-cover" />
+                                <div className="p-6">
+                                    <h3 className="text-xl font-bold text-primary mb-2">{project.name}</h3>
+                                    <p className="text-gray-600">{project.description}</p>
+                                </div>
                             </div>
-                        </div>
-
-                        {/* Project 2 */}
-                        <div className="rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-transform hover:-translate-y-2 bg-white">
-                            <img src="/projects/luxury.jpeg" alt="Residential Home Renovation" className="w-full h-64 object-cover" />
-                            <div className="p-6">
-                                <h3 className="text-xl font-bold text-primary mb-2">Luxury Home Renovation</h3>
-                                <p className="text-gray-600">Full interior and exterior remodeling for a residential client.</p>
-                            </div>
-                        </div>
-
-                        {/* Project 3 */}
-                        <div className="rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-transform hover:-translate-y-2 bg-white">
-                            <img src="/projects/foundation.jpeg" alt="Foundation Work" className="w-full h-64 object-cover" />
-                            <div className="p-6">
-                                <h3 className="text-xl font-bold text-primary mb-2">Foundation & Structurals</h3>
-                                <p className="text-gray-600">Expert structural work ensuring long-term stability.</p>
-                            </div>
-                        </div>
+                        )) : (
+                            <div className="col-span-3 text-center text-gray-500 py-8">Loading projects...</div>
+                        )}
                     </div>
 
                     <div className="text-center">

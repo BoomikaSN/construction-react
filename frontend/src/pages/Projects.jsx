@@ -4,39 +4,15 @@ import { Check } from 'lucide-react';
 const Projects = () => {
     const categories = ["All", "Residential", "Commercial", "Renovation"];
     const [selectedCategory, setSelectedCategory] = useState("All");
+    const [projects, setProjects] = useState([]);
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
 
-    const projects = [
-        {
-            title: "Modern Office Buildout",
-            category: "Commercial",
-            image: "/projects/commercial.jpeg",
-            description: "A 5,000 sq ft modern open-plan office space with custom glass partitions."
-        },
-        {
-            title: "Luxury Hillside Home",
-            category: "Residential",
-            image: "/projects/luxury.jpeg",
-            description: "Custom-designed 4-bedroom home featuring sustainable materials and panoramic views."
-        },
-        {
-            title: "Foundation Reinforcement",
-            category: "Renovation",
-            image: "/projects/foundation.jpeg",
-            description: "Structural reinforcement and foundation repair for a historic building."
-        },
-        {
-            title: "Retail Storefront",
-            category: "Commercial",
-            image: "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&q=80&w=1000",
-            description: "High-visibility retail space renovation with custom lighting and display units."
-        },
-        {
-            title: "Kitchen Remodel",
-            category: "Renovation",
-            image: "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&q=80&w=1000",
-            description: "Complete kitchen overhaul with custom cabinetry and quartz countertops."
-        }
-    ];
+    React.useEffect(() => {
+        fetch(`${apiUrl}/projects`)
+            .then(res => res.json())
+            .then(data => setProjects(data))
+            .catch(err => console.error("Error fetching projects:", err));
+    }, []);
 
     const filteredProjects = selectedCategory === "All"
         ? projects
@@ -91,7 +67,7 @@ const Projects = () => {
                                 </div>
                                 <div className="p-6">
                                     <h3 className="text-xl font-bold text-primary mb-2 group-hover:text-accent transition-colors">
-                                        {project.title}
+                                        {project.name}
                                     </h3>
                                     <p className="text-gray-600 text-sm leading-relaxed">
                                         {project.description}

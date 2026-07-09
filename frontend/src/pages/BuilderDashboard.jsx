@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShieldCheck, LogOut, Plus, Users, Layout, Briefcase } from 'lucide-react';
+import { getContractorQuotes } from '../api/quoteApi';
+import { projectApi } from '../api/projectApi';
+import { getProfile, updateProfile } from '../api/authApi';
 
 const BuilderDashboard = () => {
     const navigate = useNavigate();
@@ -16,23 +19,47 @@ const BuilderDashboard = () => {
         }
     });
 
-    // Sample data for leads and projects
-    const [leads] = useState([
-        { id: 101, name: 'Suresh Kumar', email: 'suresh@example.com', type: 'Residential', status: 'Quote Sent' },
-        { id: 102, name: 'Priya Rajan', email: 'priya@example.com', type: 'Commercial', status: 'New Inquiry' },
-        { id: 103, name: 'Vikram Singh', email: 'vikram@example.com', type: 'Renovation', status: 'Site Visit Scheduled' }
-    ]);
-
-    const [projects] = useState([
-        { id: 501, name: 'Skyview Apartments', location: 'Chennai', progress: 75, deadline: 'May 2026' },
-        { id: 502, name: 'Metro Plaza', location: 'Madurai', progress: 30, deadline: 'Dec 2026' }
-    ]);
+    // State for leads and projects
+    const [leads, setLeads] = useState([]);
+    const [projects, setProjects] = useState([]);
+    const [profile, setProfile] = useState(null);
+    const [isEditingProfile, setIsEditingProfile] = useState(false);
+    const [editFormData, setEditFormData] = useState({ name: '', phone: '', address: '', profilePhotoUrl: '' });
 
     useEffect(() => {
         if (!user) {
             navigate('/login');
         } else if (user.role !== 'builder') {
             navigate('/');
+        } else {
+            const fetchData = async () => {
+                try {
+                    const quotesData = await getContractorQuotes();
+                    setLeads(quotesData);
+                } catch (err) {
+                    console.error('Failed to fetch leads', err);
+                }
+                try {
+                    // For now, fetch all projects. Ideally we'd fetch only the builder's projects.
+                    const projData = await projectApi.getAll();
+                    setProjects(projData);
+                } catch (err) {
+                    console.error('Failed to fetch projects', err);
+                }
+                try {
+                    const profileData = await getProfile();
+                    setProfile(profileData.data);
+                    setEditFormData({
+                        name: profileData.data.name || '',
+                        phone: profileData.data.phone || '',
+                        address: profileData.data.address || '',
+                        profilePhotoUrl: profileData.data.profilePhotoUrl || ''
+                    });
+                } catch (err) {
+                    console.error('Failed to fetch profile', err);
+                }
+            };
+            fetchData();
         }
     }, [user, navigate]);
 
@@ -62,7 +89,7 @@ const BuilderDashboard = () => {
                         </div>
                         <div>
                             <h1 className="text-3xl font-bold text-white tracking-tight">Builder Admin Portal</h1>
-                            <p className="text-gray-400">Welcome back, {user.email?.split('@')[0] || 'Builder'} • System Administrator Mode</p>
+                            <p className="text-gray-400">Welcome back, {profile?.name || user.email?.split('@')[0] || 'Builder'} • System Administrator Mode</p>
                         </div>
                     </div>
                     <button
@@ -95,7 +122,7 @@ const BuilderDashboard = () => {
                             <span className="text-xs font-bold text-orange-400 bg-orange-400/10 px-2 py-1 rounded">Action Required</span>
                         </div>
                         <h3 className="text-gray-400 font-medium">New Quote Requests</h3>
-                        <p className="text-3xl font-bold text-white mt-1">08</p>
+                        <p className="text-3xl font-bold text-white mt-1">{leads.length}</p>
                     </div>
 
                     <div className="bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-lg hover:border-emerald-500/40 transition-colors group">
@@ -106,7 +133,7 @@ const BuilderDashboard = () => {
                             <span className="text-xs font-bold text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded">Active</span>
                         </div>
                         <h3 className="text-gray-400 font-medium">Projects Under Construction</h3>
-                        <p className="text-3xl font-bold text-white mt-1">15</p>
+                        <p className="text-3xl font-bold text-white mt-1">{projects.length}</p>
                     </div>
                 </div>
 
@@ -152,7 +179,7 @@ const BuilderDashboard = () => {
                                             </div>
                                             <div>
                                                 <p className="font-bold text-gray-200">{lead.name}</p>
-                                                <p className="text-xs text-gray-500">{lead.type} • {lead.email}</p>
+                                                <p className="text-xs text-gray-500">{lead.projectType} • {lead.email}</p>
                                             </div>
                                         </div>
                                         <div className="text-right">
@@ -167,6 +194,36 @@ const BuilderDashboard = () => {
 
                     {/* Sidebar Area */}
                     <div className="space-y-8">
+                        <div className="bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-lg">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="font-bold text-white">Profile Info</h3>
+                                <button onClick={() => setIsEditingProfile(true)} className="text-sm text-accent hover:underline">Edit</button>
+                            </div>
+                            <div className="space-y-3">
+                                {profile?.profilePhotoUrl && (
+                                    <div className="flex justify-center mb-4">
+                                        <img src={profile.profilePhotoUrl} alt="Profile" className="w-24 h-24 rounded-full object-cover border-2 border-gray-600" />
+                                    </div>
+                                )}
+                                <div className="flex justify-between border-b border-gray-700 pb-2 text-sm">
+                                    <span className="text-gray-400 font-medium">Name:</span>
+                                    <span className="text-gray-200">{profile?.name || 'Not set'}</span>
+                                </div>
+                                <div className="flex justify-between border-b border-gray-700 pb-2 text-sm">
+                                    <span className="text-gray-400 font-medium">Email:</span>
+                                    <span className="text-gray-200">{user.email}</span>
+                                </div>
+                                <div className="flex justify-between border-b border-gray-700 pb-2 text-sm">
+                                    <span className="text-gray-400 font-medium">Phone:</span>
+                                    <span className="text-gray-200">{profile?.phone || 'Not set'}</span>
+                                </div>
+                                <div className="flex justify-between pb-2 text-sm">
+                                    <span className="text-gray-400 font-medium">Address:</span>
+                                    <span className="text-gray-200">{profile?.address || 'Not set'}</span>
+                                </div>
+                            </div>
+                        </div>
+
                         <div className="bg-emerald-500/10 p-6 rounded-2xl border border-emerald-500/20 shadow-lg border-l-4 border-l-emerald-500">
                             <h3 className="font-bold text-emerald-400 mb-2 flex items-center gap-2">
                                 <ShieldCheck size={20} /> Professional Verification
@@ -193,6 +250,45 @@ const BuilderDashboard = () => {
                     </div>
                 </div>
             </div>
+            
+            {isEditingProfile && (
+                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+                    <div className="bg-gray-800 rounded-2xl border border-gray-700 shadow-2xl p-6 w-full max-w-md">
+                        <h2 className="text-2xl font-bold text-white mb-6">Edit Profile</h2>
+                        <form onSubmit={async (e) => {
+                            e.preventDefault();
+                            try {
+                                await updateProfile(editFormData);
+                                setProfile({ ...profile, ...editFormData });
+                                setIsEditingProfile(false);
+                            } catch (err) {
+                                console.error("Failed to update profile", err);
+                            }
+                        }} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-400 mb-1">Name</label>
+                                <input type="text" value={editFormData.name} onChange={(e) => setEditFormData({...editFormData, name: e.target.value})} className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-xl focus:ring-accent focus:border-accent text-white" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-400 mb-1">Phone</label>
+                                <input type="text" value={editFormData.phone} onChange={(e) => setEditFormData({...editFormData, phone: e.target.value})} className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-xl focus:ring-accent focus:border-accent text-white" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-400 mb-1">Address</label>
+                                <input type="text" value={editFormData.address} onChange={(e) => setEditFormData({...editFormData, address: e.target.value})} className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-xl focus:ring-accent focus:border-accent text-white" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-400 mb-1">Profile Photo URL</label>
+                                <input type="text" value={editFormData.profilePhotoUrl} onChange={(e) => setEditFormData({...editFormData, profilePhotoUrl: e.target.value})} className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-xl focus:ring-accent focus:border-accent text-white" />
+                            </div>
+                            <div className="flex justify-end gap-3 mt-6">
+                                <button type="button" onClick={() => setIsEditingProfile(false)} className="px-5 py-2 text-gray-400 bg-gray-900 rounded-xl hover:bg-gray-700">Cancel</button>
+                                <button type="submit" className="px-5 py-2 text-white bg-accent rounded-xl hover:bg-orange-600 font-bold">Save Changes</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

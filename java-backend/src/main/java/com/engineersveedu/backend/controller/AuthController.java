@@ -114,6 +114,40 @@ public class AuthController {
             response.put("email", user.getEmail());
             response.put("role", user.getRole());
             response.put("username", user.getEmail().split("@")[0]);
+            response.put("name", user.getName());
+            response.put("phone", user.getPhone());
+            response.put("address", user.getAddress());
+            response.put("profilePhotoUrl", user.getProfilePhotoUrl());
+            return ResponseEntity.ok(response);
+        }
+
+        Map<String, String> error = new HashMap<>();
+        error.put("error", "User not found");
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+
+    @PutMapping("/profile")
+    public ResponseEntity<?> updateProfile(@RequestHeader(value = "Authorization", required = false) String authHeader, @RequestBody Map<String, String> request) {
+        if (authHeader == null || !JwtUtil.validateToken(authHeader)) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Unauthorized - Missing or invalid token");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+        }
+
+        String email = JwtUtil.getEmailFromToken(authHeader);
+        Optional<User> userOpt = userRepository.findByEmail(email);
+
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            if (request.containsKey("name")) user.setName(request.get("name"));
+            if (request.containsKey("phone")) user.setPhone(request.get("phone"));
+            if (request.containsKey("address")) user.setAddress(request.get("address"));
+            if (request.containsKey("profilePhotoUrl")) user.setProfilePhotoUrl(request.get("profilePhotoUrl"));
+            
+            userRepository.save(user);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Profile updated successfully");
             return ResponseEntity.ok(response);
         }
 

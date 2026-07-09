@@ -24,8 +24,17 @@ public class Quote {
     @Column(name = "project_type", nullable = false)
     private String projectType = "General"; // Residential, Commercial, Renovation, General
 
+    @Column
+    private String budget;
+
+    @Column(name = "expected_date")
+    private String expectedDate;
+
     @Column(nullable = false)
     private String status = "New Inquiry"; // New Inquiry, Quote Sent, Site Visit Scheduled
+
+    @Column(name = "contractor_id")
+    private Long contractorId;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
@@ -82,12 +91,36 @@ public class Quote {
         this.projectType = projectType;
     }
 
+    public String getBudget() {
+        return budget;
+    }
+
+    public void setBudget(String budget) {
+        this.budget = budget;
+    }
+
+    public String getExpectedDate() {
+        return expectedDate;
+    }
+
+    public void setExpectedDate(String expectedDate) {
+        this.expectedDate = expectedDate;
+    }
+
     public String getStatus() {
         return status;
     }
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public Long getContractorId() {
+        return contractorId;
+    }
+
+    public void setContractorId(Long contractorId) {
+        this.contractorId = contractorId;
     }
 
     public LocalDateTime getCreatedAt() {
