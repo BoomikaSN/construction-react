@@ -3,12 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { Search, Star, MapPin, Briefcase, Filter } from 'lucide-react';
 import { searchContractors } from '../api/contractorApi';
 
-// Fallback data when API is unreachable
-const FALLBACK_CONTRACTORS = [
-    { id: 1, name: 'Rajesh Kumar', specialization: 'Residential', rating: 4.8, city: 'Chennai', yearsExperience: 12, verified: true },
-    { id: 2, name: 'Priya Sharma', specialization: 'Commercial', rating: 4.5, city: 'Coimbatore', yearsExperience: 8, verified: true },
-    { id: 3, name: 'Vikram Singh', specialization: 'Renovation', rating: 4.9, city: 'Madurai', yearsExperience: 15, verified: false },
-];
+
 
 const ContractorSearch = () => {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -39,8 +34,7 @@ const ContractorSearch = () => {
             setContractors(Array.isArray(data) ? data : []);
         } catch (err) {
             console.error('Failed to fetch contractors:', err);
-            setError('Unable to load contractors. Showing sample results.');
-            setContractors(FALLBACK_CONTRACTORS);
+            setError('Unable to load contractors. Please try again later.');
         } finally {
             setLoading(false);
         }

@@ -13,6 +13,10 @@ export const projectApi = {
     return apiClient.get(`/projects/${id}`);
   },
   
-  getByContractorId: getContractorProjects
+  getByContractorId: getContractorProjects,
+  
+  createProject: async (projectData) => {
+    return apiClient.post('/projects', projectData);
+  }
 };
 

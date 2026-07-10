@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageCircle, X, Send, Bot } from 'lucide-react';
+import { MessageSquare, MessageCircle, X, Send, User, Bot, MinusSquare } from 'lucide-react';
+import { apiClient } from '../api/apiClient';
 
 const Chatbot = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -34,10 +35,6 @@ const Chatbot = () => {
         }
     }, [messages.length]);
 
-    const getApiUrl = () => {
-        return import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
-    };
-
     const handleSendMessage = async (text) => {
         if (!text.trim()) return;
 
@@ -47,16 +44,7 @@ const Chatbot = () => {
         setIsTyping(true);
 
         try {
-            const apiUrl = getApiUrl();
-            const response = await fetch(`${apiUrl}/chat`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: text })
-            });
-
-            if (!response.ok) throw new Error('Failed to get response');
-
-            const data = await response.json();
+            const data = await apiClient.post('/chat', { message: text });
 
             // Artificial delay for better UX
             setTimeout(() => {

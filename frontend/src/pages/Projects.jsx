@@ -1,17 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Check } from 'lucide-react';
+import { projectApi } from '../api/projectApi';
 
 const Projects = () => {
     const categories = ["All", "Residential", "Commercial", "Renovation"];
     const [selectedCategory, setSelectedCategory] = useState("All");
     const [projects, setProjects] = useState([]);
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    React.useEffect(() => {
-        fetch(`${apiUrl}/projects`)
-            .then(res => res.json())
-            .then(data => setProjects(data))
-            .catch(err => console.error("Error fetching projects:", err));
+    useEffect(() => {
+        const fetchProjects = async () => {
+            try {
+                const response = await projectApi.getAll();
+                setProjects(Array.isArray(response?.data) ? response.data : []);
+            } catch (err) {
+                console.error("Error fetching projects:", err);
+                setError("Failed to load projects.");
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchProjects();
     }, []);
 
     const filteredProjects = selectedCategory === "All"
@@ -52,7 +62,16 @@ const Projects = () => {
             {/* Projects Grid */}
             <section className="py-16 bg-gray-50 flex-grow">
                 <div className="container mx-auto px-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {loading ? (
+                        <div className="flex justify-center items-center py-20">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                        </div>
+                    ) : error ? (
+                        <div className="text-center py-20 text-red-500 font-medium">
+                            {error}
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {filteredProjects.map((project, idx) => (
                             <div key={idx} className="group bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
                                 <div className="relative overflow-hidden h-64">
@@ -75,10 +94,12 @@ const Projects = () => {
                                 </div>
                             </div>
                         ))}
-                    </div>
-                    {filteredProjects.length === 0 && (
-                        <div className="text-center py-20 text-gray-400">
-                            <p className="text-xl">No projects found in this category.</p>
+                        </div>
+                    )}
+                    {!loading && !error && filteredProjects.length === 0 && (
+                        <div className="text-center py-20 bg-white rounded-2xl shadow-sm border mt-8">
+                            <h3 className="text-2xl font-bold text-gray-800 mb-2">No Projects Found</h3>
+                            <p className="text-gray-500">There are no projects in the '{selectedCategory}' category yet.</p>
                         </div>
                     )}
                 </div>

@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { MessageSquare, Users, ThumbsUp, Share2, Bell, Send } from 'lucide-react';
+import { apiClient } from '../api/apiClient';
 
 const Community = () => {
     const [posts, setPosts] = useState([]);
     const [newPost, setNewPost] = useState("");
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
 
     useEffect(() => {
         fetchPosts();
@@ -12,11 +12,8 @@ const Community = () => {
 
     const fetchPosts = async () => {
         try {
-            const res = await fetch(`${apiUrl}/community`);
-            if (res.ok) {
-                const data = await res.json();
-                setPosts(data);
-            }
+            const res = await apiClient.get('/community');
+            setPosts(res);
         } catch (error) {
             console.error("Failed to fetch posts:", error);
         }
@@ -27,20 +24,13 @@ const Community = () => {
         if (!newPost.trim()) return;
 
         try {
-            const res = await fetch(`${apiUrl}/community`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    author: "You", 
-                    text: newPost,
-                    isOfficial: false
-                })
+            const res = await apiClient.post('/community', { 
+                author: "You", 
+                text: newPost,
+                isOfficial: false
             });
-            if (res.ok) {
-                const created = await res.json();
-                setPosts([created, ...posts]);
-                setNewPost("");
-            }
+            setPosts([res, ...posts]);
+            setNewPost("");
         } catch (error) {
             console.error("Failed to submit post:", error);
         }

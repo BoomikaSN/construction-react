@@ -6,20 +6,6 @@ import { getContractorProjects } from '../api/projectApi';
 import { getContractorReviews, submitReview } from '../api/reviewApi';
 import { submitQuote } from '../api/quoteApi';
 
-// Fallback data when API is unreachable
-const FALLBACK_CONTRACTOR = {
-    id: 1, name: 'Rajesh Kumar', specialization: 'Residential Construction',
-    rating: 4.8, city: 'Chennai', yearsExperience: 12, verified: true,
-    bio: 'Expert residential contractor with over a decade of experience building quality homes across Tamil Nadu. Specialized in modern designs with sustainable materials.',
-};
-const FALLBACK_PROJECTS = [
-    { id: 1, name: 'Skyview Apartments', image: '/projects/commercial.jpeg', category: 'Residential', description: 'Modern apartment complex with 50 units.' },
-    { id: 2, name: 'Luxury Villa', image: '/projects/luxury.jpeg', category: 'Residential', description: 'Custom-designed luxury villa with panoramic views.' },
-];
-const FALLBACK_REVIEWS = [
-    { id: 1, author: 'Suresh K.', rating: 5, text: 'Excellent work on our home renovation. Very professional and on time.', date: '2 weeks ago' },
-    { id: 2, author: 'Priya M.', rating: 4, text: 'Good quality construction. Minor delays but overall satisfied.', date: '1 month ago' },
-];
 
 const ContractorDetail = () => {
     const { id } = useParams();
@@ -54,15 +40,12 @@ const ContractorDetail = () => {
                     getContractorProjects(id),
                     getContractorReviews(id),
                 ]);
-                setContractor(contractorData || FALLBACK_CONTRACTOR);
-                setProjects(Array.isArray(projectsData) ? projectsData : FALLBACK_PROJECTS);
-                setReviews(Array.isArray(reviewsData) ? reviewsData : FALLBACK_REVIEWS);
+                setContractor(contractorData.data ? contractorData.data : contractorData);
+                setProjects(Array.isArray(projectsData?.data) ? projectsData.data : (Array.isArray(projectsData) ? projectsData : []));
+                setReviews(Array.isArray(reviewsData?.data) ? reviewsData.data : (Array.isArray(reviewsData) ? reviewsData : []));
             } catch (err) {
                 console.error('Failed to fetch contractor details:', err);
-                setError('Unable to load contractor details. Showing sample data.');
-                setContractor(FALLBACK_CONTRACTOR);
-                setProjects(FALLBACK_PROJECTS);
-                setReviews(FALLBACK_REVIEWS);
+                setError('Unable to load contractor details.');
             } finally {
                 setLoading(false);
             }
@@ -101,8 +84,9 @@ const ContractorDetail = () => {
         e.preventDefault();
         setReviewStatus('sending');
         try {
-            const newReview = await submitReview(id, reviewData);
-            setReviews(prev => [newReview || { ...reviewData, id: Date.now(), author: user?.email?.split('@')[0] || 'You', date: 'Just now' }, ...prev]);
+            const payload = { ...reviewData, author: user?.name || user?.email?.split('@')[0] || 'Anonymous' };
+            const newReview = await submitReview(id, payload);
+            setReviews(prev => [newReview || { ...payload, id: Date.now(), date: 'Just now' }, ...prev]);
             setReviewStatus('success');
             setReviewData({ rating: 5, text: '' });
         } catch (err) {
@@ -126,6 +110,18 @@ const ContractorDetail = () => {
         return (
             <div className="flex h-screen items-center justify-center bg-gray-50">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            </div>
+        );
+    }
+
+    if (!contractor) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 text-center px-4">
+                <h1 className="text-3xl font-bold text-gray-800 mb-4">Contractor Not Found</h1>
+                <p className="text-gray-600 mb-6">The contractor you are looking for does not exist or an error occurred.</p>
+                <Link to="/contractors/search" className="bg-primary text-white px-6 py-2 rounded-lg font-bold hover:bg-primary/90 transition-colors">
+                    Back to Search
+                </Link>
             </div>
         );
     }

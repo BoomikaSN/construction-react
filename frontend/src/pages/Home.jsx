@@ -4,16 +4,12 @@ import { ShieldCheck, Gauge, Clock, User, Star, Search } from 'lucide-react';
 import { getFeaturedContractors } from '../api/contractorApi';
 import { getRecentReviews } from '../api/reviewApi';
 import { submitQuote } from '../api/quoteApi';
-
-// Fallback data when API is unreachable
-const FALLBACK_REVIEWS = [
-    { id: 1, text: "The team was professional and the project was completed with exceptional quality. Highly recommend!", author: "Homeowner", rating: 5 },
-];
+import { projectApi } from '../api/projectApi';
 
 const Home = () => {
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState('');
-    const [reviews, setReviews] = useState(FALLBACK_REVIEWS);
+    const [reviews, setReviews] = useState([]);
     const [loadingReviews, setLoadingReviews] = useState(true);
     const [projects, setProjects] = useState([]);
 
@@ -35,12 +31,8 @@ const Home = () => {
             }
             
             try {
-                const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
-                const res = await fetch(`${apiUrl}/projects`);
-                if (res.ok) {
-                    const data = await res.json();
-                    setProjects(data);
-                }
+                const data = await projectApi.getAll();
+                setProjects(data);
             } catch (err) {
                 console.error('Failed to fetch homepage projects:', err);
             }

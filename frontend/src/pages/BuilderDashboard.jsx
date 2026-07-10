@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShieldCheck, LogOut, Plus, Users, Layout, Briefcase } from 'lucide-react';
-import { getContractorQuotes } from '../api/quoteApi';
+import { getContractorQuotes, updateQuoteStatus } from '../api/quoteApi';
 import { projectApi } from '../api/projectApi';
 import { getProfile, updateProfile } from '../api/authApi';
 
@@ -25,6 +25,41 @@ const BuilderDashboard = () => {
     const [profile, setProfile] = useState(null);
     const [isEditingProfile, setIsEditingProfile] = useState(false);
     const [editFormData, setEditFormData] = useState({ name: '', phone: '', address: '', profilePhotoUrl: '' });
+    
+    // Status update modal state
+    const [statusModalLead, setStatusModalLead] = useState(null);
+    const [newStatus, setNewStatus] = useState('');
+    
+    const handleStatusUpdate = async () => {
+        if (!statusModalLead || !newStatus) return;
+        try {
+            await updateQuoteStatus(statusModalLead.id, { status: newStatus });
+            setLeads(leads.map(l => l.id === statusModalLead.id ? { ...l, status: newStatus } : l));
+            setStatusModalLead(null);
+        } catch (err) {
+            console.error('Failed to update status', err);
+            alert('Failed to update status');
+        }
+    };
+
+    // New project modal state
+    const [showProjectModal, setShowProjectModal] = useState(false);
+    const [newProject, setNewProject] = useState({ name: '', description: '', location: '', deadline: '', progress: 0, category: 'Residential', image: '' });
+
+    const handleAddProject = async () => {
+        try {
+            // Need to pass contractorId which should be profile id or user id if available.
+            // Using a simple logic for now assuming user is correctly identified.
+            const projectData = { ...newProject, contractorId: user.id || 1, status: 'In Progress' };
+            const created = await projectApi.createProject(projectData);
+            setProjects([created, ...projects]);
+            setShowProjectModal(false);
+            setNewProject({ name: '', description: '', location: '', deadline: '', progress: 0, category: 'Residential', image: '' });
+        } catch (err) {
+            console.error('Failed to create project', err);
+            alert('Failed to add project');
+        }
+    };
 
     useEffect(() => {
         if (!user) {
@@ -145,7 +180,7 @@ const BuilderDashboard = () => {
                                 <h2 className="text-xl font-bold flex items-center gap-2">
                                     <Briefcase className="text-accent" size={24} /> Project Tracking
                                 </h2>
-                                <button className="bg-accent text-white px-5 py-2 rounded-xl font-bold hover:bg-orange-600 transition-all flex items-center gap-2 shadow-lg">
+                                <button onClick={() => setShowProjectModal(true)} className="bg-accent text-white px-5 py-2 rounded-xl font-bold hover:bg-orange-600 transition-all flex items-center gap-2 shadow-lg">
                                     <Plus size={20} /> Add New Project
                                 </button>
                             </div>
@@ -184,7 +219,7 @@ const BuilderDashboard = () => {
                                         </div>
                                         <div className="text-right">
                                             <span className="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded border border-blue-500/20 font-bold uppercase">{lead.status}</span>
-                                            <button className="block text-accent text-xs font-bold mt-1 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">View Case →</button>
+                                            <button onClick={() => { setStatusModalLead(lead); setNewStatus(lead.status); }} className="block text-accent text-xs font-bold mt-1 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Update Status →</button>
                                         </div>
                                     </div>
                                 ))}
@@ -286,6 +321,99 @@ const BuilderDashboard = () => {
                                 <button type="submit" className="px-5 py-2 text-white bg-accent rounded-xl hover:bg-orange-600 font-bold">Save Changes</button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+            {/* Status Update Modal */}
+            {statusModalLead && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-gray-800 rounded-2xl w-full max-w-md p-6 border border-gray-700 shadow-2xl">
+                        <h2 className="text-2xl font-bold mb-4 text-white">Update Status</h2>
+                        <p className="text-gray-400 mb-4 text-sm">Updating status for <strong>{statusModalLead.name}</strong>'s request.</p>
+                        
+                        <div className="space-y-4 mb-6">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-300 mb-2">New Status</label>
+                                <select 
+                                    className="w-full bg-gray-900 border border-gray-700 text-white rounded-lg p-3 focus:outline-none focus:border-accent"
+                                    value={newStatus}
+                                    onChange={(e) => setNewStatus(e.target.value)}
+                                >
+                                    <option value="New Inquiry">New Inquiry</option>
+                                    <option value="In Review">In Review</option>
+                                    <option value="Accepted">Accepted</option>
+                                    <option value="In Progress">In Progress</option>
+                                    <option value="Completed">Completed</option>
+                                    <option value="Rejected">Rejected</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-4">
+                            <button
+                                onClick={() => setStatusModalLead(null)}
+                                className="flex-1 py-3 px-4 bg-gray-700 hover:bg-gray-600 text-white font-bold rounded-lg transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleStatusUpdate}
+                                className="flex-1 py-3 px-4 bg-accent hover:bg-accent/90 text-white font-bold rounded-lg transition-colors shadow-lg shadow-accent/20"
+                            >
+                                Save Changes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Add Project Modal */}
+            {showProjectModal && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-gray-800 rounded-2xl w-full max-w-lg p-6 border border-gray-700 shadow-2xl">
+                        <h2 className="text-2xl font-bold mb-6 text-white">Add New Project</h2>
+                        <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-400 mb-1">Project Name</label>
+                                <input type="text" value={newProject.name} onChange={e => setNewProject({...newProject, name: e.target.value})} className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:border-accent outline-none" placeholder="E.g. Modern Villa" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-400 mb-1">Description</label>
+                                <textarea value={newProject.description} onChange={e => setNewProject({...newProject, description: e.target.value})} className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:border-accent outline-none h-24 resize-none" placeholder="Project details..."></textarea>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-400 mb-1">Location</label>
+                                    <input type="text" value={newProject.location} onChange={e => setNewProject({...newProject, location: e.target.value})} className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:border-accent outline-none" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-400 mb-1">Deadline</label>
+                                    <input type="text" value={newProject.deadline} onChange={e => setNewProject({...newProject, deadline: e.target.value})} className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:border-accent outline-none" placeholder="e.g. Dec 2024" />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-400 mb-1">Category</label>
+                                    <select value={newProject.category} onChange={e => setNewProject({...newProject, category: e.target.value})} className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:border-accent outline-none">
+                                        <option value="Residential">Residential</option>
+                                        <option value="Commercial">Commercial</option>
+                                        <option value="Renovation">Renovation</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-400 mb-1">Image URL</label>
+                                    <input type="text" value={newProject.image} onChange={e => setNewProject({...newProject, image: e.target.value})} className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:border-accent outline-none" placeholder="https://..." />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-400 mb-1">Progress ({newProject.progress}%)</label>
+                                <input type="range" min="0" max="100" value={newProject.progress} onChange={e => setNewProject({...newProject, progress: parseInt(e.target.value)})} className="w-full accent-accent" />
+                            </div>
+                        </div>
+                        <div className="flex gap-4 mt-6 pt-4 border-t border-gray-700">
+                            <button onClick={() => setShowProjectModal(false)} className="flex-1 py-3 bg-gray-700 hover:bg-gray-600 text-white font-bold rounded-lg transition-colors">Cancel</button>
+                            <button onClick={handleAddProject} className="flex-1 py-3 bg-accent hover:bg-accent/90 text-white font-bold rounded-lg transition-colors shadow-lg shadow-accent/20">Add Project</button>
+                        </div>
                     </div>
                 </div>
             )}
