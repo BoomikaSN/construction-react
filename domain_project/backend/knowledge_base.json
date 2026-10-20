@@ -1,0 +1,26 @@
+[
+  {
+    "source": "index.html",
+    "title": "Home - Engineers Veedu",
+    "description": "Construction contractor services, portfolio, and trust signals",
+    "content": "Professional Construction Contractor Website | Engineers Veedu"
+  },
+  {
+    "source": "company_info",
+    "title": "Company Overview",
+    "description": "Engineers Veedu company information",
+    "content": "\n            Engineers Veedu is a professional construction contractor with over 10 years of experience.\n            Services include: residential construction, commercial buildouts, renovations, foundation work,\n            and structural engineering. The company is certified and insured. Service areas include\n            Chennai, Coimbatore, and Madurai regions.\n            "
+  },
+  {
+    "source": "contact_info",
+    "title": "Contact Information",
+    "description": "How to contact Engineers Veedu",
+    "content": "\n            Contact Information:\n            - Phone: +1 (555) 123-4567\n            - Email: support@contractorpro.com\n            - Business Hours: Monday-Friday 8AM-6PM EST\n            "
+  },
+  {
+    "source": "projects",
+    "title": "Portfolio",
+    "description": "Recent construction projects",
+    "content": "\n            Recent Projects:\n            1. Commercial Buildout - Modern office space delivered on time and within budget\n            2. Luxury Home Renovation - Full interior and exterior remodeling\n            3. Foundation & Structurals - Expert structural work ensuring long-term stability\n            "
+  }
+]

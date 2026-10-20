@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+embeddings.json
+.venv/
+
+# Node
+domain_project/frontend/node_modules/
+
+# Java / Maven
+domain_project/java-backend/target/
+
+# Frontend build
+domain_project/frontend/dist/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Ignore everything at root except domain_project
+build_clean_report.py
+build_internship_report.py
+capture_db_screenshot.py
+capture_screenshots.py
+generate_full_report.py
+generate_html_report.py
+build_scripts/
+screenshots/
+output report folder/
