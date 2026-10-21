@@ -4,6 +4,7 @@ import { ShieldCheck, LogOut, Plus, Users, Layout, Briefcase } from 'lucide-reac
 import { getContractorQuotes, updateQuoteStatus } from '../api/quoteApi';
 import { projectApi } from '../api/projectApi';
 import { getProfile, updateProfile } from '../api/authApi';
+import { getContractor } from '../api/contractorApi';
 
 const BuilderDashboard = () => {
     const navigate = useNavigate();
@@ -22,6 +23,7 @@ const BuilderDashboard = () => {
     // State for leads and projects
     const [leads, setLeads] = useState([]);
     const [projects, setProjects] = useState([]);
+    const [contractorInfo, setContractorInfo] = useState(null);
     const [profile, setProfile] = useState(null);
     const [isEditingProfile, setIsEditingProfile] = useState(false);
     const [editFormData, setEditFormData] = useState({ name: '', phone: '', address: '', profilePhotoUrl: '' });
@@ -104,7 +106,11 @@ const BuilderDashboard = () => {
 
                 try {
                     const contractorId = currentProfile?.contractorId || user?.contractorId || 1;
-                    const projData = await projectApi.getContractorProjectsList(contractorId);
+                    const [projData, cData] = await Promise.all([
+                        projectApi.getContractorProjectsList(contractorId),
+                        getContractor(contractorId)
+                    ]);
+                    setContractorInfo(cData);
                     setProjects(projData);
                 } catch (err) {
                     console.error('Failed to fetch projects', err);
@@ -141,7 +147,13 @@ const BuilderDashboard = () => {
                         </div>
                         <div>
                             <h1 className="text-3xl font-bold text-white tracking-tight">Builder Admin Portal</h1>
-                            <p className="text-gray-400">Welcome back, {profile?.name || user.email?.split('@')[0] || 'Builder'} • System Administrator Mode</p>
+                            <div className="flex flex-wrap items-center gap-2 mt-2">
+                                <span className="text-gray-300 font-medium">Welcome back, <strong className="text-white">{profile?.name || user.email?.split('@')[0]}</strong></span>
+                                <span className="text-gray-500">•</span>
+                                <span className="inline-flex items-center gap-1.5 bg-orange-500/20 text-accent text-xs px-3 py-1 rounded-full font-semibold border border-orange-500/30">
+                                    🏢 Managing Contractor Profile: <strong className="text-white">{contractorInfo?.name || "Rajesh Kumar"}</strong> ({contractorInfo?.specialization || "Residential"} • {contractorInfo?.city || "Chennai"})
+                                </span>
+                            </div>
                         </div>
                     </div>
                     <button
@@ -237,7 +249,15 @@ const BuilderDashboard = () => {
                                             </div>
                                             <div>
                                                 <p className="font-bold text-gray-200">{lead.name}</p>
-                                                <p className="text-xs text-gray-500">{lead.projectType} • {lead.email}</p>
+                                                <p className="text-xs text-gray-400">{lead.projectType} • {lead.email}</p>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <span className="text-[10px] text-gray-400 bg-gray-800 px-2 py-0.5 rounded border border-gray-700">
+                                                        {lead.contractorId ? `Target Contractor: ${contractorInfo?.name || 'Contractor #' + lead.contractorId}` : 'Target: General Inquiry'}
+                                                    </span>
+                                                </div>
+                                                {lead.message && (
+                                                    <p className="text-xs text-gray-400 mt-1 italic line-clamp-1">"{lead.message}"</p>
+                                                )}
                                             </div>
                                         </div>
                                         <div className="text-right">
