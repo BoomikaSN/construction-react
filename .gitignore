@@ -19,6 +19,8 @@ domain_project/frontend/dist/
 .DS_Store
 Thumbs.db
 desktop.ini
+*.db
+*.pptx
 
 # Ignore everything at root except domain_project
 build_clean_report.py

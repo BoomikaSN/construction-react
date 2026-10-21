@@ -16,7 +16,7 @@ export const projectApi = {
   getByContractorId: getContractorProjects,
 
   getClientProjects: async (email) => {
-    return apiClient.get('/projects/client', { params: { email } });
+    return apiClient.get(`/projects/client?email=${encodeURIComponent(email || '')}`);
   },
 
   getContractorProjectsList: async (contractorId) => {
@@ -27,4 +27,3 @@ export const projectApi = {
     return apiClient.post('/projects', projectData);
   }
 };
-

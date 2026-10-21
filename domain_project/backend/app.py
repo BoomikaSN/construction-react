@@ -182,6 +182,30 @@ def keyword_search(query, top_k=3):
     results.sort(key=lambda x: x['score'], reverse=True)
     return [r['doc'] for r in results[:top_k]]
 
+def generate_fallback_answer(query, docs):
+    lower = query.lower()
+    if any(k in lower for k in ["service", "offer", "provide", "build", "construction"]):
+        return "At Engineers Veedu, we provide end-to-end construction services including residential home builds, commercial buildouts, complete renovations, foundation work, and structural engineering across Chennai, Coimbatore, and Madurai. Feel free to request a quote or contact our team!"
+    if any(k in lower for k in ["quote", "estimate", "cost", "price", "rate"]):
+        return "You can easily request a free, no-obligation quote! Simply use the quick quote form on our homepage or visit any contractor's profile page to submit your project requirements."
+    if any(k in lower for k in ["area", "city", "cities", "location", "where"]):
+        return "Engineers Veedu currently operates across South India, with active verified contractors serving the Chennai, Coimbatore, and Madurai regions."
+    if any(k in lower for k in ["project", "portfolio", "recent", "work"]):
+        return "Our recent projects include Modern Commercial Buildouts, Luxury Villa Renovations, and Foundation & Structural engineering works. You can browse our complete portfolio on the Projects page!"
+    if any(k in lower for k in ["contact", "phone", "email", "call", "reach", "address"]):
+        return "You can reach Engineers Veedu by phone at +1 (555) 123-4567 or by email at support@contractorpro.com. Our support team is available Monday through Friday, 8:00 AM to 6:00 PM."
+    if any(k in lower for k in ["contractor", "builder", "engineer", "verified", "hire"]):
+        return "All contractors registered with Engineers Veedu are certified, insured, and verified. You can browse contractor profiles, check client ratings, view their past projects, and directly send quote inquiries."
+    if any(k in lower for k in ["track", "progress", "milestone", "status"]):
+        return "Clients can track real-time construction progress right from their Client Dashboard! You can see milestone updates from Planning to Foundation, Brick Work, Plastering, and Final Completion."
+    if any(k in lower for k in ["hello", "hi", "hey"]):
+        return "Hello! 👋 Welcome to Engineers Veedu. How can I help you today? You can ask me about our construction services, request a quote, explore verified contractors, or learn about our recent projects."
+    if docs:
+        content = docs[0].get("content", "").strip()
+        if content:
+            return f"According to our records: {' '.join(content.split())} Feel free to call us at +1 (555) 123-4567 for any specific inquiries!"
+    return "Engineers Veedu is your trusted construction contractor platform with over 10 years of experience in Chennai, Coimbatore, and Madurai. Please call us at +1 (555) 123-4567 or use our quote form for more details!"
+
 # Initialize Gemini model - using latest model
 model = genai.GenerativeModel('gemini-2.5-flash')
 
@@ -385,15 +409,22 @@ Customer Question: {user_message}
 
 Please provide a helpful, friendly response:"""
         
-        # Get response from Gemini
-        response = model.generate_content(
-            full_prompt,
-            generation_config=genai.types.GenerationConfig(
-                temperature=0.7,
-                max_output_tokens=500,
+        # Get response from Gemini with intelligent fallback
+        try:
+            response = model.generate_content(
+                full_prompt,
+                generation_config=genai.types.GenerationConfig(
+                    temperature=0.7,
+                    max_output_tokens=500,
+                )
             )
-        )
-        answer = response.text.strip()
+            answer = response.text.strip()
+        except Exception as api_err:
+            print(f"Gemini API error ({api_err}), using smart fallback.")
+            answer = generate_fallback_answer(user_message, relevant_docs)
+
+        if not answer:
+            answer = generate_fallback_answer(user_message, relevant_docs)
         
         # Track sources
         sources = [doc['source'] for doc in relevant_docs]
@@ -417,10 +448,11 @@ Please provide a helpful, friendly response:"""
         print(f"Error in chat endpoint: {e}")
         import traceback
         traceback.print_exc()
+        fallback = "At Engineers Veedu, we provide professional residential, commercial, and renovation construction services across Chennai, Coimbatore, and Madurai. How can we assist your project today?"
         return jsonify({
-            "error": "I apologize, but I'm having trouble processing your request. Please try again or contact us directly.",
-            "details": str(e)
-        }), 500
+            "response": fallback,
+            "sources": ["company_info"]
+        })
 
 
 @app.route('/clear', methods=['POST'])

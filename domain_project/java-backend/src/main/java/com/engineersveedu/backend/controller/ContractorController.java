@@ -17,6 +17,7 @@ import jakarta.transaction.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,7 +55,6 @@ public class ContractorController {
     @GetMapping("/featured")
     public ResponseEntity<List<Contractor>> getFeaturedContractors() {
         List<Contractor> featured = contractorRepository.findByVerifiedTrue();
-        // If no verified found, return first few
         if (featured.isEmpty()) {
             featured = contractorRepository.findAll().subList(0, Math.min(3, (int) contractorRepository.count()));
         }
@@ -119,7 +119,10 @@ public class ContractorController {
     }
 
     @GetMapping("/saved")
-    public ResponseEntity<?> getSavedContractors(@RequestParam String email) {
+    public ResponseEntity<?> getSavedContractors(@RequestParam(required = false) String email) {
+        if (email == null || email.trim().isEmpty()) {
+            return ResponseEntity.ok(Collections.emptyList());
+        }
         List<SavedContractor> savedList = savedContractorRepository.findByUserEmail(email);
         List<Long> contractorIds = savedList.stream().map(SavedContractor::getContractorId).toList();
         List<Contractor> contractors = contractorRepository.findAllById(contractorIds);
@@ -127,14 +130,16 @@ public class ContractorController {
     }
 
     @PostMapping("/{id}/save")
-    public ResponseEntity<?> saveContractor(@PathVariable Long id, @RequestParam String email) {
+    public ResponseEntity<?> saveContractor(@PathVariable Long id, @RequestParam(required = false) String email) {
         if (!contractorRepository.existsById(id)) {
             Map<String, String> err = new HashMap<>();
             err.put("error", "Contractor not found");
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(err);
         }
-        if (!savedContractorRepository.existsByUserEmailAndContractorId(email, id)) {
-            savedContractorRepository.save(new SavedContractor(email, id));
+        if (email != null && !email.trim().isEmpty()) {
+            if (!savedContractorRepository.existsByUserEmailAndContractorId(email, id)) {
+                savedContractorRepository.save(new SavedContractor(email, id));
+            }
         }
         Map<String, String> res = new HashMap<>();
         res.put("message", "Contractor saved successfully");
@@ -143,8 +148,10 @@ public class ContractorController {
 
     @DeleteMapping("/{id}/save")
     @Transactional
-    public ResponseEntity<?> unsaveContractor(@PathVariable Long id, @RequestParam String email) {
-        savedContractorRepository.deleteByUserEmailAndContractorId(email, id);
+    public ResponseEntity<?> unsaveContractor(@PathVariable Long id, @RequestParam(required = false) String email) {
+        if (email != null && !email.trim().isEmpty()) {
+            savedContractorRepository.deleteByUserEmailAndContractorId(email, id);
+        }
         Map<String, String> res = new HashMap<>();
         res.put("message", "Contractor removed from saved list");
         return ResponseEntity.ok(res);

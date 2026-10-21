@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -37,8 +38,12 @@ public class ProjectController {
         }
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Project not found"));
     }
+
     @GetMapping("/projects/client")
-    public ResponseEntity<List<Project>> getProjectsByClient(@RequestParam String email) {
+    public ResponseEntity<List<Project>> getProjectsByClient(@RequestParam(required = false) String email) {
+        if (email == null || email.trim().isEmpty()) {
+            return ResponseEntity.ok(Collections.emptyList());
+        }
         return ResponseEntity.ok(projectRepository.findByClientEmail(email));
     }
 

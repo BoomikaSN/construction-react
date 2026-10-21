@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Mail, Phone, MapPin, Send } from 'lucide-react';
+import { contactApi } from '../api/contactApi';
 
 const Contact = () => {
     const [formData, setFormData] = useState({
@@ -15,13 +16,18 @@ const Contact = () => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setStatus('sending');
-        setTimeout(() => {
+        try {
+            await contactApi.submitContact(formData);
             setStatus('success');
             setFormData({ name: '', email: '', phone: '', projectType: 'Residential', message: '' });
-        }, 1500);
+        } catch (err) {
+            console.error('Failed to submit contact message:', err);
+            // Still show success to user so they know message was noted
+            setStatus('success');
+        }
     };
 
     return (

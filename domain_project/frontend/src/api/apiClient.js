@@ -9,8 +9,21 @@ const getAuthHeaders = () => {
 };
 
 export const apiClient = {
-  async get(endpoint) {
-    const response = await fetch(`${BASE_URL}${endpoint}`, {
+  async get(endpoint, options = {}) {
+    let url = `${BASE_URL}${endpoint}`;
+    if (options && options.params) {
+      const searchParams = new URLSearchParams();
+      Object.entries(options.params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          searchParams.append(key, value);
+        }
+      });
+      const queryString = searchParams.toString();
+      if (queryString) {
+        url += (url.includes('?') ? '&' : '?') + queryString;
+      }
+    }
+    const response = await fetch(url, {
       method: 'GET',
       headers: getAuthHeaders(),
     });
@@ -61,7 +74,6 @@ async function handleResponse(response) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.dispatchEvent(new Event('user-state-change'));
-      // Optional: redirect to login
     }
     const errorData = await response.json().catch(() => ({}));
     throw new Error(errorData.error || errorData.message || 'An error occurred');
